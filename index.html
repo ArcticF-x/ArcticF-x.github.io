@@ -29,6 +29,12 @@
       <p class="kicker">ArcticF_x</p>
       <h1>一名 Unity <span class="hl-blue">独立游戏开发者</span>。</h1>
       <p class="hero-sub">《磁力跃迁》已上架，一款关于吸引与排斥的平台跳跃游戏。《织法双境》开发中，一款双人合作魔法动作游戏。项目正在寻找伙伴。</p>
+      <div class="hero-tags">
+        <span class="tag">初中生</span>
+        <span class="tag">Vibe Coding 爱好者</span>
+        <span class="tag">不容忍低质量 AI 美术垃圾</span>
+        <span class="tag">会 Unity</span>
+      </div>
       <div class="hero-btns">
         <a href="#weave" class="btn btn-solid">开发中的项目</a>
         <a href="#join" class="link-arrow">加入开发 →</a>
@@ -75,11 +81,48 @@
     </div>
   </section>
 
-  <!-- 织法双境 -->
-  <section class="section alt" id="weave">
+  <!-- Unity 程序化立体交通系统生成 -->
+  <section class="section alt" id="traffic-system">
     <div class="container">
       <div class="section-head">
         <span class="num">02</span>
+        <div class="head-meta">
+          <span class="status soon">即将发布</span>
+          <h2>Unity 程序化立体交通系统生成 <em>Procedural Traffic System</em></h2>
+        </div>
+      </div>
+      <p class="lead narrow">一键生成立体交通系统，作用如标题所示。目前正在审核中。</p>
+      <div class="carousel" id="traffic-carousel">
+        <div class="frame carousel-viewport">
+          <div class="carousel-track">
+            <div class="slide">
+              <video controls preload="none" poster="assets/img/traffic-intro-poster.jpg">
+                <source src="https://s.snappable.media/2df570faf5f5e01dea5fac2ebe14549c.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="slide"><img src="https://s.snappable.media/b4b0c3270c7db61912af640f297ab93d.png" alt="封面图" loading="lazy"></div>
+            <div class="slide"><img src="https://s.snappable.media/51080e896f41a5223e017b28de9e9f3c.png" alt="图片 1" loading="lazy"></div>
+            <div class="slide"><img src="https://s.snappable.media/720940358b6704d8d03cc38ca949a515.png" alt="图片 2" loading="lazy"></div>
+            <div class="slide"><img src="https://s.snappable.media/b2f60d459ced96ba2b26aa1e04536fc4.png" alt="图片 3" loading="lazy"></div>
+            <div class="slide"><img src="https://s.snappable.media/3b832d213c069b7383e3272038f00bfc.png" alt="图片 4" loading="lazy"></div>
+            <div class="slide"><img src="https://s.snappable.media/d22b193ebd30d6483bcbed701f375e2b.png" alt="图片 5" loading="lazy"></div>
+          </div>
+        </div>
+        <button class="car-btn car-prev" type="button" aria-label="上一张">‹</button>
+        <button class="car-btn car-next" type="button" aria-label="下一张">›</button>
+        <div class="car-bar">
+          <span class="car-counter"><span class="car-index">1</span> / 7</span>
+          <div class="car-dots"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 织法双境 -->
+  <section class="section" id="weave">
+    <div class="container">
+      <div class="section-head">
+        <span class="num">03</span>
         <div class="head-meta">
           <span class="status dev">开发中</span>
           <h2>织法双境 <em>Weave: Dual Realms</em></h2>
@@ -122,7 +165,7 @@
   <section class="section" id="join">
     <div class="container">
       <div class="section-head">
-        <span class="num">03</span>
+        <span class="num">04</span>
         <div class="head-meta">
           <span class="status dev">找伙伴</span>
           <h2>一起做游戏</h2>
@@ -169,6 +212,45 @@
       <p class="footer-copy">© 2026 ArcticF_x · 独立游戏开发者</p>
     </div>
   </footer>
+
+  <script>
+    // ===== 轮播 =====
+    (function () {
+      var car = document.getElementById('traffic-carousel');
+      if (!car) return;
+      var track = car.querySelector('.carousel-track');
+      var slides = track.children;
+      var total = slides.length;
+      var indexEl = car.querySelector('.car-index');
+      var dotsBox = car.querySelector('.car-dots');
+      var dots = [];
+      var cur = 0;
+
+      for (var i = 0; i < total; i++) {
+        var d = document.createElement('button');
+        d.className = 'car-dot';
+        d.type = 'button';
+        d.setAttribute('aria-label', '第 ' + (i + 1) + ' 张');
+        (function (n) { d.addEventListener('click', function () { go(n); }); })(i);
+        dotsBox.appendChild(d);
+        dots.push(d);
+      }
+
+      function go(n) {
+        cur = (n + total) % total;
+        track.style.transform = 'translateX(' + (-cur * 100) + '%)';
+        indexEl.textContent = cur + 1;
+        dots.forEach(function (dot, i) { dot.classList.toggle('active', i === cur); });
+        // 切换时暂停上一张里的视频
+        var vids = track.querySelectorAll('video');
+        vids.forEach(function (v) { if (!v.paused) v.pause(); });
+      }
+
+      car.querySelector('.car-prev').addEventListener('click', function () { go(cur - 1); });
+      car.querySelector('.car-next').addEventListener('click', function () { go(cur + 1); });
+      go(0);
+    })();
+  </script>
 
 </body>
 
