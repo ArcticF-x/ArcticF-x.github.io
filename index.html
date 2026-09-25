@@ -27,7 +27,7 @@
   <header class="hero" id="top">
     <div class="container">
       <p class="kicker">ArcticF_x</p>
-      <h1>一名 Unity <span class="hl-blue">独立游戏开发者</span>。</h1>
+      <h1>一名 Unity <span class="hl-orange">独立游戏开发者</span>。</h1>
       <p class="hero-sub">《磁力跃迁》已上架，一款关于吸引与排斥的平台跳跃游戏。《织法双境》开发中，一款双人合作魔法动作游戏。项目正在寻找伙伴。</p>
       <div class="hero-tags">
         <span class="tag">初中生</span>
@@ -41,6 +41,17 @@
       </div>
     </div>
   </header>
+
+  <!-- 滚动展示：磁力跃迁 -->
+  <div class="pin-showcase">
+    <div class="pin-sticky">
+      <div class="pin-img" style="background-image:url('assets/img/magnetic-leap-cover.jpg')"></div>
+      <div class="pin-title">
+        <span class="big">MAGNETIC LEAP</span>
+        <span class="sub">磁 力 跃 迁</span>
+      </div>
+    </div>
+  </div>
 
   <!-- 磁力跃迁 -->
   <section class="section" id="magnetic-leap">
@@ -81,8 +92,19 @@
     </div>
   </section>
 
+  <!-- 滚动展示：交通系统 -->
+  <div class="pin-showcase">
+    <div class="pin-sticky">
+      <div class="pin-img" style="background-image:url('https://s.snappable.media/b4b0c3270c7db61912af640f297ab93d.png')"></div>
+      <div class="pin-title">
+        <span class="big">TRAFFIC SYSTEM</span>
+        <span class="sub">程 序 化 立 体 交 通</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Unity 程序化立体交通系统生成 -->
-  <section class="section alt" id="traffic-system">
+  <section class="section alt sec-green" id="traffic-system">
     <div class="container">
       <div class="section-head">
         <span class="num">02</span>
@@ -118,8 +140,19 @@
     </div>
   </section>
 
+  <!-- 滚动展示：织法双境 -->
+  <div class="pin-showcase">
+    <div class="pin-sticky">
+      <div class="pin-img" style="background-image:url('assets/img/weave-dual-realms.png')"></div>
+      <div class="pin-title">
+        <span class="big">DUAL REALMS</span>
+        <span class="sub">织 法 双 境</span>
+      </div>
+    </div>
+  </div>
+
   <!-- 织法双境 -->
-  <section class="section" id="weave">
+  <section class="section sec-orange" id="weave">
     <div class="container">
       <div class="section-head">
         <span class="num">03</span>
@@ -195,7 +228,7 @@
         </li>
       </ul>
       <div class="actions">
-        <button class="btn btn-solid qq-btn" type="button">找我聊聊<span class="qq-tip">QQ：1548964659</span></button>
+        <button class="btn btn-solid btn-orange qq-btn" type="button">找我聊聊</button>
       </div>
     </div>
   </section>
@@ -249,6 +282,103 @@
       car.querySelector('.car-prev').addEventListener('click', function () { go(cur - 1); });
       car.querySelector('.car-next').addEventListener('click', function () { go(cur + 1); });
       go(0);
+    })();
+
+    // ===== 滚动浮现 =====
+    (function () {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.15 });
+
+      document.querySelectorAll('.section-head, .frame, .lead, .two-col, .shots, .vids figure, .roles li, .hero-tags, .hero-btns, .actions').forEach(function (el) {
+        el.classList.add('rv');
+        io.observe(el);
+      });
+    })();
+
+    // ===== 铺展吸附展示 =====
+    (function () {
+      var blocks = document.querySelectorAll('.pin-showcase');
+      if (!blocks.length) return;
+
+      function update() {
+        var vh = window.innerHeight;
+        blocks.forEach(function (b) {
+          var rect = b.getBoundingClientRect();
+          var total = b.offsetHeight - vh;
+          var img = b.querySelector('.pin-img');
+          var title = b.querySelector('.pin-title');
+
+          // 阶段1：图片从顶部向下铺展（进入视口的过程）
+          var e = Math.min(Math.max((vh - rect.top) / vh, 0), 1);
+          img.style.clipPath = 'inset(0 0 ' + (100 - e * 100) + '% 0)';
+
+          // 阶段2：吸附后（继续滚动），图片去模糊提亮
+          var p = total > 0 ? Math.min(Math.max(-rect.top / total, 0), 1) : 0;
+          var focus = Math.min(p / 0.5, 1);
+          img.style.filter = 'blur(' + (14 - 14 * focus) + 'px) brightness(' + (0.35 + 0.3 * focus) + ') saturate(1.15)';
+
+          // 阶段3：文字浮现
+          var t = Math.min(Math.max((p - 0.18) / 0.3, 0), 1);
+          title.style.opacity = t;
+          title.style.transform = 'translateY(' + (40 - t * 40) + 'px)';
+        });
+      }
+
+      var ticking = false;
+      window.addEventListener('scroll', function () {
+        if (!ticking) {
+          requestAnimationFrame(function () { update(); ticking = false; });
+          ticking = true;
+        }
+      }, { passive: true });
+      window.addEventListener('resize', update);
+      update();
+    })();
+    // ===== QQ 复制 + 浮动提示 =====
+    (function () {
+      var btn = document.querySelector('.qq-btn');
+      if (!btn) return;
+      var QQ = '1548964659';
+
+      var toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = 'QQ：<b>1548964659</b><span class="toast-ok">已复制到剪贴板</span>';
+      document.body.appendChild(toast);
+      var timer = null;
+
+      function showToast() {
+        toast.classList.add('show');
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(function () { toast.classList.remove('show'); }, 3200);
+      }
+
+      function copyFallback() {
+        var ta = document.createElement('textarea');
+        ta.value = QQ;
+        ta.style.cssText = 'position:fixed;opacity:0;';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (err) { }
+        document.body.removeChild(ta);
+      }
+
+      btn.addEventListener('click', function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(QQ).then(showToast, function () {
+            copyFallback();
+            showToast();
+          });
+        } else {
+          copyFallback();
+          showToast();
+        }
+      });
     })();
   </script>
 
