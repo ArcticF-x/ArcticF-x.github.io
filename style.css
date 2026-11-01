@@ -155,7 +155,8 @@ body::after { right: calc(50% - 500px); }
   margin-top: 40px;
   display: flex;
   align-items: center;
-  gap: 32px;
+  flex-wrap: wrap;
+  gap: 16px 32px;
 }
 
 /* ---- 个人标签 ---- */
@@ -451,6 +452,8 @@ body::after { right: calc(50% - 500px); }
   color: var(--accent);
   opacity: 0.7;
 }
+.vids figcaption a { color: inherit; transition: color 0.2s; }
+.vids figcaption a:hover { color: var(--accent); }
 
 /* ---- 轮播 ---- */
 .carousel { position: relative; }
