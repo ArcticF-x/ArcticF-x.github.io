@@ -15,6 +15,7 @@
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
+        <div id="unity-status" style="margin-top:8px;text-align:center;font:12px/1.5 Arial,sans-serif;color:#ffffff;opacity:.85;white-space:nowrap"></div>
       </div>
       <div id="unity-warning"> </div>
       <div id="unity-footer">
@@ -53,13 +54,24 @@
 
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/game.loader.js";
+
+      // GitHub Pages does not send a Content-Encoding header for pre-compressed files,
+      // so the payload is decompressed in the browser instead of relying on the server.
+      // Unity's own "Decompression Fallback" option does the same thing; this build was
+      // exported without it, so the equivalent logic lives here.
+      var buildAssets = [
+        { key: "dataUrl", file: "game.data.gz", type: "application/octet-stream", from: 0, to: 0.76 },
+        { key: "codeUrl", file: "game.wasm.gz", type: "application/wasm", from: 0.76, to: 0.99 },
+        { key: "frameworkUrl", file: "game.framework.js.gz", type: "text/javascript", from: 0.99, to: 1 }
+      ];
+
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/game.data",
-        frameworkUrl: buildUrl + "/game.framework.js",
-        codeUrl: buildUrl + "/game.wasm",
+        dataUrl: "",
+        frameworkUrl: "",
+        codeUrl: "",
         streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
+        companyName: "Gcore",
         productName: "MagnetGame",
         productVersion: "1.0",
         showBanner: unityShowBanner,
@@ -110,23 +122,92 @@
 
       document.querySelector("#unity-loading-bar").style.display = "block";
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                document.querySelector("#unity-loading-bar").style.display = "none";
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
+      var progressBar = document.querySelector("#unity-progress-bar-full");
+      var statusText = document.querySelector("#unity-status");
 
-              }).catch((message) => {
-                alert(message);
-              });
+      function setProgress(fraction, text) {
+        progressBar.style.width = Math.max(0, Math.min(1, fraction)) * 100 + "%";
+        statusText.textContent = text;
+      }
+
+      function formatMB(bytes) {
+        return ((bytes || 0) / 1048576).toFixed(1) + " MB";
+      }
+
+      function formatTime(seconds) {
+        if (!isFinite(seconds) || seconds <= 0) return "0 秒";
+        var minutes = Math.floor(seconds / 60);
+        return minutes > 0 ? minutes + " 分 " + Math.round(seconds % 60) + " 秒" : Math.round(seconds) + " 秒";
+      }
+
+      async function fetchDecompressed(asset, onProgress) {
+        var response = await fetch(buildUrl + "/" + asset.file);
+        if (!response.ok) throw new Error("无法下载 " + asset.file + "（HTTP " + response.status + "）");
+
+        var total = parseInt(response.headers.get("Content-Length"), 10) || 0;
+        var reader = response.body.getReader();
+        var chunks = [];
+        var received = 0;
+        for (;;) {
+          var chunk = await reader.read();
+          if (chunk.done) break;
+          chunks.push(chunk.value);
+          received += chunk.value.length;
+          onProgress(received, total);
+        }
+
+        var decompressed = new Response(
+          new Blob(chunks).stream().pipeThrough(new DecompressionStream("gzip"))
+        );
+        var buffer = await decompressed.arrayBuffer();
+        return URL.createObjectURL(new Blob([buffer], { type: asset.type }));
+      }
+
+      async function boot() {
+        if (typeof DecompressionStream === "undefined") {
+          unityShowBanner("当前浏览器不支持 DecompressionStream，无法解压游戏资源，请使用较新的 Chrome / Edge / Safari。", "error");
+          return;
+        }
+
+        var startedAt = performance.now();
+
+        for (var i = 0; i < buildAssets.length; i++) {
+          var asset = buildAssets[i];
+          startedAt = performance.now();
+          config[asset.key] = await fetchDecompressed(asset, function (received, total) {
+            var fraction = asset.from + (asset.to - asset.from) * (total ? received / total : 0);
+            var speed = received / Math.max((performance.now() - startedAt) / 1000, 0.5);
+            var remaining = total ? (total - received) / Math.max(speed, 1) : 0;
+            setProgress(fraction, "正在加载游戏资源 " + formatMB(received) + " / " + formatMB(total) +
+              "（" + formatMB(speed) + "/s，剩余约 " + formatTime(remaining) + "）");
+          });
+        }
+
+        setProgress(1, "资源已就绪，正在启动引擎…");
+
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+          createUnityInstance(canvas, config, (progress) => {
+            setProgress(0.99 + 0.01 * progress, "正在启动引擎… " + Math.round(progress * 100) + "%");
+          }).then((unityInstance) => {
+            document.querySelector("#unity-loading-bar").style.display = "none";
+            document.querySelector("#unity-fullscreen-button").onclick = () => {
+              unityInstance.SetFullscreen(1);
             };
 
-      document.body.appendChild(script);
+          }).catch((message) => {
+            alert(message);
+          });
+        };
+
+        document.body.appendChild(script);
+      }
+
+      boot().catch(function (error) {
+        console.error(error);
+        unityShowBanner(error && error.message ? error.message : String(error), "error");
+      });
 
     </script>
   </body>
